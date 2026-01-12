@@ -1,0 +1,68 @@
+{
+  "name": "Uttarandhra Tirupati Devasthanam",
+  "short_name": "UT Temple",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#7f1d1d",
+  "orientation": "portrait-primary",
+  "description": "Official App of Shri Venkateswara Swamy Temple, Pendurthi.",
+  "icons": [
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book Darshan",
+      "short_name": "Booking",
+      "description": "Book Special Entry Darshan",
+      "url": "/#/booking",
+      "icons": [{ "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564", "sizes": "192x192" }]
+    },
+    {
+      "name": "E-Hundi",
+      "short_name": "Donate",
+      "description": "Make a Donation",
+      "url": "/#/e-hundi",
+      "icons": [{ "src": "https://firebasestorage.googleapis.com/v0/b/gen-lang-client-0677230990.firebasestorage.app/o/logo%2Fcb3d423f-ec99-48a4-b070-adf5c21ddd76.png?alt=media&token=adcbaf32-142d-46d0-be86-f2a505054564", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://picsum.photos/id/10/400/800",
+      "sizes": "400x800",
+      "type": "image/jpg",
+      "form_factor": "narrow",
+      "label": "Home Screen"
+    },
+    {
+      "src": "https://picsum.photos/id/16/800/600",
+      "sizes": "800x600",
+      "type": "image/jpg",
+      "form_factor": "wide",
+      "label": "Desktop Dashboard"
+    }
+  ]
+}

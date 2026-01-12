@@ -1,0 +1,14 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    "public": {
+       ".read": true,
+       ".write": false
+    },
+    "settings": {
+       ".read": true,
+       ".write": "auth != null"
+    }
+  }
+}

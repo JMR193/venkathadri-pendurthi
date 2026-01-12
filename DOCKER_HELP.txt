@@ -1,0 +1,108 @@
+
+# Docker Deployment Instructions
+
+This file contains the necessary files and commands to containerize the Uttarandhra Tirupati application using Docker.
+
+## 1. Create a `Dockerfile` in the root directory
+
+Copy the following content into a file named `Dockerfile`:
+
+```dockerfile
+# Stage 1: Build the Angular application
+FROM node:18-alpine as build
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the application for production
+# This command uses Vite via AnalogJS to build to the 'dist' folder
+RUN npm run build
+
+# Stage 2: Serve the application with Nginx
+FROM nginx:alpine
+
+# Copy the built files from the previous stage
+# Note: Check your 'vite.config.ts' output directory. Usually it is dist/[project-name]/browser or just dist
+# For this project configuration, it likely outputs to dist/
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Copy custom Nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose port 80
+EXPOSE 80
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+## 2. Create `nginx.conf` in the root directory
+
+To ensure Angular routing works correctly (Single Page Application support), you need a custom Nginx config. Copy this into `nginx.conf`:
+
+```nginx
+server {
+    listen 80;
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    location / {
+        # Redirect all requests to index.html so Angular router handles them
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Optional: Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, no-transform";
+    }
+}
+```
+
+## 3. Create `.dockerignore` in the root directory
+
+To prevent unnecessary files from being copied to the Docker image:
+
+```text
+node_modules
+dist
+.git
+.firebase
+.vscode
+```
+
+## 4. Build and Run Commands
+
+### Build the Docker Image
+
+Run this command in your terminal from the project root:
+
+```bash
+docker build -t ut-temple-app .
+```
+
+### Run the Container
+
+Run the container on port 8080 (maps container port 80 to host port 8080):
+
+```bash
+docker run -d -p 8080:80 --name temple-app ut-temple-app
+```
+
+Now you can access the website at `http://localhost:8080`.
+
+### Troubleshooting
+
+If you need to pass environment variables (like API_KEY) during build, modify the Dockerfile:
+
+1. Add `ARG API_KEY` before the build step.
+2. Build with: `docker build --build-arg API_KEY=your_key_here -t ut-temple-app .`
+
+Alternatively, update your `vite.config.ts` to read from process.env if available during build time.
