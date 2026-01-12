@@ -1,3 +1,4 @@
+
 import { Component, ElementRef, OnInit, OnDestroy, ViewChild, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TempleService } from '../services/temple.service';
@@ -24,7 +25,7 @@ declare var THREE: any;
               <h2 class="text-2xl font-serif font-bold text-amber-400 drop-shadow-md">Divya Darshanam</h2>
               <p class="text-xs text-stone-300">Shri Venkateswara Swamy</p>
            </div>
-           <button (click)="close.emit()" class="bg-red-600/80 hover:bg-red-600 text-white p-3 rounded-full backdrop-blur-sm transition-all shadow-lg hover:shadow-red-500/50">
+           <button (click)="goBack()" class="bg-red-600/80 hover:bg-red-600 text-white p-3 rounded-full backdrop-blur-sm transition-all shadow-lg hover:shadow-red-500/50">
              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
            </button>
         </div>
@@ -124,14 +125,13 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
   private currentRotation = { x: 0, y: 0 };
   private mouseDelta = { x: 0, y: 0 };
 
-  close = new (class { emit() { window.history.back(); } })();
-
   ngOnInit() {
+    // Small delay to ensure container is rendered
     setTimeout(() => {
       this.initThreeJS();
-    }, 500);
+    }, 100);
 
-    // Safety timeout
+    // Safety timeout to disable loader if ThreeJS takes too long
     setTimeout(() => {
         if (this.loading()) {
             this.loading.set(false);
@@ -170,6 +170,10 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
   private disposeMaterial(material: any) {
      if (material.map) material.map.dispose();
      material.dispose();
+  }
+
+  goBack() {
+    window.history.back();
   }
 
   setView(view: 'face' | 'feet' | 'full') {
@@ -236,11 +240,12 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
 
   initThreeJS() {
     if (typeof THREE === 'undefined') {
-        // Fallback or retry logic if THREE not loaded yet
         console.warn('Three.js not loaded');
         this.loading.set(false);
         return;
     }
+
+    if (!this.containerRef) return; // Guard clause
 
     const width = this.containerRef.nativeElement.clientWidth;
     const height = this.containerRef.nativeElement.clientHeight;
@@ -293,6 +298,8 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
     if (THREE.STLLoader) {
       const loader = new THREE.STLLoader();
       loader.load('tirupati.stl', (geometry: any) => {
+          if (!this.scene) return; // Check if scene destroyed during load
+          
           geometry.computeBoundingBox();
           geometry.computeVertexNormals();
           const box = geometry.boundingBox;
@@ -319,6 +326,7 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
       }, 
       undefined, 
       (error: any) => {
+          if (!this.scene) return;
           this.createProceduralModels();
           this.loading.set(false);
       });
@@ -357,7 +365,7 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
   }
 
   createProceduralModels() {
-    if (!this.idolGroup) return; // Safeguard if idolGroup is not initialized
+    if (!this.idolGroup) return; 
     this.idolGroup.clear();
     const namamGroup = new THREE.Group();
     const uShape = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.3, 8, 20, Math.PI), this.goldMaterial);
@@ -376,6 +384,8 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
 
   performPushpanjali() {
     this.isRainingFlowers.set(true);
+    if (!this.scene) return;
+
     const texture = this.createTexture('petal');
     const material = new THREE.SpriteMaterial({ map: texture, color: 0xffffff });
     for(let i=0; i<80; i++) {
@@ -395,6 +405,8 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
 
   performArathi() {
       this.isArathiActive.set(true);
+      if (!this.scene) return;
+
       const light = new THREE.PointLight(0xffaa00, 2, 8);
       const texture = this.createTexture('flame');
       const mat = new THREE.SpriteMaterial({ map: texture, blending: THREE.AdditiveBlending });
@@ -404,7 +416,7 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
       this.scene.add(light);
       this.harathiObj = { light, angle: -Math.PI/2, radius: 4, height: -2 };
       setTimeout(() => {
-          this.scene.remove(light);
+          if (this.scene) this.scene.remove(light);
           this.harathiObj = null;
           this.isArathiActive.set(false);
       }, 8000);
@@ -413,6 +425,9 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
   animate() {
     this.animationId = requestAnimationFrame(() => this.animate());
     const time = Date.now() * 0.001;
+
+    // Guard clause against disposed resources
+    if (!this.scene || !this.camera || !this.renderer) return;
 
     if (this.camera) {
         this.camera.position.z += (this.targetDistance - this.camera.position.z) * 0.05;
@@ -475,9 +490,7 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
         this.particles.material.opacity = 0.3 + Math.sin(time) * 0.1;
     }
     
-    if (this.renderer && this.scene && this.camera) {
-        this.renderer.render(this.scene, this.camera);
-    }
+    this.renderer.render(this.scene, this.camera);
   }
 
   // Interaction Handlers
@@ -505,7 +518,7 @@ export class DigitalDarshanComponent implements OnInit, OnDestroy {
      }
   }
   onResize() {
-     if(!this.camera || !this.renderer) return;
+     if(!this.camera || !this.renderer || !this.containerRef) return;
      const w = this.containerRef.nativeElement.clientWidth;
      const h = this.containerRef.nativeElement.clientHeight;
      this.camera.aspect = w/h;

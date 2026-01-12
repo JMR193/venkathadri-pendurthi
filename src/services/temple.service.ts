@@ -285,15 +285,24 @@ export class TempleService {
     }
     this.supabase = createClient(environment.supabase.url, environment.supabase.key);
 
-    // Setup Logic
-    this.checkConnection();
+    // Setup Logic (Fire and forget, but handle errors safely)
+    this.checkConnection().catch(e => console.warn('Connection check handled', e));
     this.initAuth();
-    this.loadInitialData();
+    this.loadInitialData().catch(e => console.warn('Initial data load handled', e));
     this.setupRealtimeListeners();
     
     // Live Features
-    this.trackVisitor();
-    this.fetchRealWeather();
+    this.trackVisitor().catch(e => {}); // Suppress errors for background tasks
+    this.fetchRealWeather().catch(e => {});
+  }
+
+  // --- Utility Helper for Dates ---
+  getTodayDate(): string {
+    const now = new Date();
+    // Offset for local timezone to ensure YYYY-MM-DD corresponds to user's "today"
+    const offset = now.getTimezoneOffset() * 60000;
+    const localDate = new Date(now.getTime() - offset);
+    return localDate.toISOString().split('T')[0];
   }
 
   async checkConnection() {
@@ -367,7 +376,7 @@ export class TempleService {
         // 2. Check if already counted in this session to prevent spamming
         const lastVisit = localStorage.getItem('last_visit_ip');
         const visitedToday = localStorage.getItem('visited_today');
-        const today = new Date().toISOString().split('T')[0];
+        const today = this.getTodayDate();
 
         // Fetch current stats from Supabase
         const { data: statsData } = await this.supabase.from('settings').select('data').eq('id', 'stats').single();
@@ -518,8 +527,8 @@ export class TempleService {
       if (user) {
         this.currentUser.set(user);
         this.isAdmin.set(true); 
-        this.fetchDonations();
-        this.fetchFeedbacks();
+        this.fetchDonations().catch(() => {});
+        this.fetchFeedbacks().catch(() => {});
       } else {
         this.currentUser.set(null);
         this.isAdmin.set(false);
@@ -558,15 +567,12 @@ export class TempleService {
   }
 
   async loadInitialData() {
-    try {
-        await Promise.all([
-            this.fetchNews(),
-            this.fetchGallery(),
-            this.fetchLibrary()
-        ]);
-    } catch (e) {
-        console.warn("Data refresh failed", e);
-    }
+    // Use Promise.allSettled to ensure that one failure doesn't block other data
+    await Promise.allSettled([
+        this.fetchNews(),
+        this.fetchGallery(),
+        this.fetchLibrary()
+    ]);
   }
 
   // --- Data Fetching Methods (Supabase) ---
@@ -643,24 +649,28 @@ export class TempleService {
 
   async fetchFeedbacks() {
     if (!this.isAdmin()) return;
-    const { data, error } = await this.supabase
-      .from('feedback')
-      .select('*')
-      .order('date', { ascending: false })
-      .limit(50);
+    try {
+      const { data, error } = await this.supabase
+        .from('feedback')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(50);
 
-    if (data) this.feedbacks.set(data as FeedbackItem[]);
+      if (data) this.feedbacks.set(data as FeedbackItem[]);
+    } catch(e) {}
   }
 
   async fetchDonations() {
     if (!this.isAdmin()) return;
-    const { data, error } = await this.supabase
-      .from('donations')
-      .select('*')
-      .order('date', { ascending: false })
-      .limit(100);
+    try {
+      const { data, error } = await this.supabase
+        .from('donations')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(100);
 
-    if (data) this.donations.set(data as Donation[]);
+      if (data) this.donations.set(data as Donation[]);
+    } catch(e) {}
   }
 
   // --- Report Generation ---
