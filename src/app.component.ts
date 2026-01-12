@@ -1,3 +1,4 @@
+
 import { Component, ChangeDetectionStrategy, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { TempleService } from './services/temple.service';
@@ -43,15 +44,27 @@ import { ChatComponent } from './components/chat.component';
             </button>
           </div>
 
-          <div class="flex gap-4">
+          <div class="flex gap-4 items-center">
             <a [href]="'tel:' + templeService.siteConfig().contactPhone" class="hover:text-white transition-colors">Help Desk: {{ templeService.siteConfig().contactPhone }}</a>
-            <span>|</span>
-            <a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-white transition-colors animate-pulse font-bold text-amber-400">Live Darshan</a>
-            <span>|</span>
-            @if (templeService.isAdmin()) {
-              <button (click)="templeService.logout()" class="font-bold text-amber-400 hover:text-amber-200">Logout (Admin)</button>
+            <span class="opacity-50">|</span>
+            <a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-white transition-colors animate-pulse font-bold text-amber-400 flex items-center gap-1">
+               <span class="w-2 h-2 rounded-full bg-red-500"></span> Live Darshan
+            </a>
+            <span class="opacity-50">|</span>
+            
+            @if (templeService.currentUser()) {
+               @if (templeService.isAdmin()) {
+                  <span class="font-bold text-amber-400">Admin</span>
+                  <a routerLink="/admin" class="hover:text-white transition-colors">Dashboard</a>
+               } @else {
+                  <span class="font-bold text-amber-400">Welcome, Devotee</span>
+                  <a routerLink="/booking" class="hover:text-white transition-colors">My Profile</a>
+               }
+               <button (click)="templeService.logout()" class="hover:text-red-300 font-bold ml-2">Logout</button>
             } @else {
-              <a routerLink="/admin" class="hover:text-white transition-colors">Admin Login</a>
+               <a routerLink="/login" class="font-bold text-amber-200 hover:text-white transition-colors">Log In / Sign Up</a>
+               <span class="opacity-50">|</span>
+               <a routerLink="/admin" class="hover:text-white transition-colors text-xs opacity-70">Staff Login</a>
             }
           </div>
         </div>
@@ -107,8 +120,11 @@ import { ChatComponent } from './components/chat.component';
               <a (click)="closeMobileMenu()" routerLink="/library" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Library</a>
               <a (click)="closeMobileMenu()" routerLink="/gallery" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Gallery</a>
               <a (click)="closeMobileMenu()" routerLink="/feedback" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Feedback</a>
-              @if (templeService.isAdmin()) {
-                 <a (click)="closeMobileMenu()" routerLink="/admin" class="px-4 py-3 rounded-md bg-amber-100 shadow-sm font-semibold text-amber-900">CMS Dashboard</a>
+              
+              @if (templeService.currentUser()) {
+                 <button (click)="templeService.logout()" class="px-4 py-3 rounded-md bg-red-100 font-bold text-red-900 mt-2">Logout</button>
+              } @else {
+                 <a (click)="closeMobileMenu()" routerLink="/login" class="px-4 py-3 rounded-md bg-[#800000] text-white font-bold mt-2 text-center shadow">Log In / Sign Up</a>
               }
             </nav>
           </div>
@@ -139,6 +155,7 @@ import { ChatComponent } from './components/chat.component';
               <li><a routerLink="/library" class="hover:text-amber-400 transition-colors">Spiritual Library</a></li>
               <li><a routerLink="/gallery" class="hover:text-amber-400 transition-colors">Photo Gallery</a></li>
               <li><a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-amber-400 transition-colors">YouTube Channel</a></li>
+              <li><a [href]="templeService.siteConfig().whatsappChannel" target="_blank" class="hover:text-green-400 transition-colors flex items-center gap-1 font-bold"><span class="w-2 h-2 rounded-full bg-green-500"></span> WhatsApp Channel</a></li>
             </ul>
           </div>
           <div>
@@ -159,9 +176,6 @@ import { ChatComponent } from './components/chat.component';
           </p>
         </div>
       </footer>
-      
-      <!-- AI Chat Assistant -->
-      <app-chat></app-chat>
     </div>
   `
 })

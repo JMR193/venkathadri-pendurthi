@@ -1,7 +1,0 @@
-specVersion: 'v1'
-serviceId: 'uttarandhra-tirupati'
-location: 'us-central1'
-schema:
-  source: "./dataconnect/schema"
-connector:
-  source: "./dataconnect/connector"

@@ -1,5 +1,5 @@
 
-import { Component, inject, signal, effect, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, signal, effect, OnDestroy, ChangeDetectionStrategy, ViewChild, ElementRef } from '@angular/core';
 import { TempleService, LibraryItem, Booking, NewsItem, GalleryItem, Donation, TempleInsights, Panchangam, SiteConfig, FeedbackItem, ThemeConfig } from '../services/temple.service';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -13,7 +13,7 @@ import { RouterLink } from '@angular/router';
   template: `
     <div class="min-h-screen bg-stone-100 font-sans flex flex-col">
       
-      <!-- Login Overlay -->
+      <!-- Login Overlay (Admin Access Only) -->
       @if (!templeService.isAdmin()) {
         <div class="fixed inset-0 z-50 flex items-center justify-center bg-red-900/95 backdrop-blur-sm">
           <div class="w-full max-w-md bg-white p-8 themed-rounded-xl shadow-2xl border-2 border-amber-400 animate-fade-in relative">
@@ -47,9 +47,12 @@ import { RouterLink } from '@angular/router';
                    <button (click)="verifyOTP()" class="w-full mt-4 bg-amber-600 text-white p-3 themed-rounded font-bold hover:bg-amber-700">Verify</button>
                 </div>
              } @else {
-                <input type="email" [(ngModel)]="email" class="w-full mb-4 p-3 border themed-rounded" placeholder="Email Address">
+                <div class="mb-4 bg-amber-50 p-3 rounded text-xs text-amber-800 border border-amber-200">
+                   <strong>Note:</strong> Public users, please use the <a routerLink="/login" class="underline font-bold">Devotee Login</a> page.
+                </div>
+                <input type="email" [(ngModel)]="email" class="w-full mb-4 p-3 border themed-rounded" placeholder="Admin Email Address">
                 <input type="password" [(ngModel)]="password" class="w-full mb-4 p-3 border themed-rounded" placeholder="Password">
-                <button (click)="handleLogin()" class="w-full bg-red-900 text-white p-3 themed-rounded font-bold hover:bg-red-800 transition-colors">Login</button>
+                <button (click)="handleLogin()" class="w-full bg-red-900 text-white p-3 themed-rounded font-bold hover:bg-red-800 transition-colors">Admin Login</button>
              }
              
              @if(loginError) {
@@ -67,7 +70,7 @@ import { RouterLink } from '@angular/router';
                 <div class="w-8 h-8 bg-amber-500 themed-rounded flex items-center justify-center text-stone-900 font-bold">A</div>
                 <div>
                   <h3 class="font-bold text-amber-400">Temple CMS</h3>
-                  <p class="text-[10px] text-stone-400">v4.2 • Live</p>
+                  <p class="text-[10px] text-stone-400">v4.3 • Live</p>
                 </div>
             </div>
 
@@ -485,14 +488,32 @@ import { RouterLink } from '@angular/router';
               </div>
             }
 
-            <!-- News/Announcements Manager -->
+            <!-- News/Announcements Manager with Rich Text -->
             @if(activeTab() === 'news') {
                <h2 class="text-2xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-300">Announcements</h2>
                <div class="bg-white p-6 themed-rounded-xl shadow-sm border border-stone-200 mb-8">
                   <h3 class="font-bold text-lg mb-4">{{ newsForm.id ? 'Edit' : 'Create' }} Announcement</h3>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <input [(ngModel)]="newsForm.title" placeholder="Title" class="p-2 border themed-rounded md:col-span-2">
-                     <textarea [(ngModel)]="newsForm.content" placeholder="Content (HTML allowed)" class="p-2 border themed-rounded h-32 md:col-span-2"></textarea>
+                     <input [(ngModel)]="newsForm.title" placeholder="Title" class="p-2 border themed-rounded md:col-span-2 font-bold text-lg">
+                     
+                     <div class="md:col-span-2 border border-stone-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-amber-500 transition-shadow">
+                        <div class="bg-stone-100 border-b border-stone-200 p-2 flex gap-1 items-center">
+                            <button (click)="applyFormat('bold')" title="Bold" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded font-bold text-stone-700">B</button>
+                            <button (click)="applyFormat('italic')" title="Italic" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded italic font-serif text-stone-700">I</button>
+                            <span class="w-px h-6 bg-stone-300 mx-1"></span>
+                            <button (click)="applyFormat('h3')" title="Heading" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded font-bold text-stone-700 text-xs">H3</button>
+                            <button (click)="applyFormat('p')" title="Paragraph" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded font-bold text-stone-700 text-xs">P</button>
+                            <span class="w-px h-6 bg-stone-300 mx-1"></span>
+                            <button (click)="applyFormat('link')" title="Link" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded text-stone-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path d="M12.232 4.232a2.5 2.5 0 0 1 3.536 3.536l-1.225 1.224a.75.75 0 0 0 1.061 1.06l1.224-1.224a4 4 0 0 0-5.656-5.656l-3 3a4 4 0 0 0 .225 5.865.75.75 0 0 0 .977-1.138 2.5 2.5 0 0 1-.142-3.667l3-3Z" /><path d="M11.603 7.96a.75.75 0 0 0-.977 1.138 2.5 2.5 0 0 1 .142 3.667l-3 3a2.5 2.5 0 0 1-3.536-3.536l1.225-1.224a.75.75 0 0 0-1.061-1.06l-1.224 1.224a4 4 0 1 0 5.656 5.656l3-3a4 4 0 0 0-.225-5.865Z" /></svg>
+                            </button>
+                            <button (click)="applyFormat('list')" title="List" class="w-8 h-8 flex items-center justify-center hover:bg-stone-200 rounded text-stone-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M2 4.75A.75.75 0 0 1 2.75 4h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 4.75Zm0 10.5a.75.75 0 0 1 .75-.75h7.5a.75.75 0 0 1 0 1.5h-7.5a.75.75 0 0 1-.75-.75ZM2 10a.75.75 0 0 1 .75-.75h14.5a.75.75 0 0 1 0 1.5H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <textarea #newsContentArea [(ngModel)]="newsForm.content" placeholder="Content (HTML supported)" class="w-full p-3 h-48 focus:outline-none resize-none bg-white" spellcheck="false"></textarea>
+                     </div>
+
                      <input [(ngModel)]="newsForm.imageUrl" placeholder="Image URL (Optional)" class="p-2 border themed-rounded">
                      <input [(ngModel)]="newsForm.attachmentUrl" placeholder="Attachment URL (Optional)" class="p-2 border themed-rounded">
                   </div>
@@ -504,20 +525,28 @@ import { RouterLink } from '@angular/router';
 
                <div class="space-y-4">
                   @for (item of templeService.news(); track item.id) {
-                     <div class="bg-white p-4 themed-rounded-lg shadow-sm border flex justify-between items-center">
+                     <div class="bg-white p-4 themed-rounded-lg shadow-sm border flex justify-between items-center group hover:border-amber-400 transition-colors">
                         <div>
-                           <p class="font-bold">{{item.title}}</p>
+                           <p class="font-bold text-stone-800">{{item.title}}</p>
                            <p class="text-xs text-stone-500">{{item.date | date:'medium'}}</p>
+                           <div class="text-xs text-stone-400 mt-1 line-clamp-1 opacity-70">{{item.content}}</div>
                         </div>
-                        <div class="flex gap-2"><button (click)="editNews(item)" class="text-blue-600 hover:underline">Edit</button><button (click)="deleteNews(item.id)" class="text-red-600 hover:underline">Delete</button></div>
+                        <div class="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button (click)="editNews(item)" class="text-blue-600 hover:underline bg-blue-50 px-2 py-1 rounded text-xs font-bold">Edit</button>
+                            <button (click)="deleteNews(item.id)" class="text-red-600 hover:underline bg-red-50 px-2 py-1 rounded text-xs font-bold">Delete</button>
+                        </div>
                      </div>
                   }
                </div>
             }
 
-            <!-- Gallery Manager -->
+            <!-- Gallery Manager with Drag & Drop -->
             @if(activeTab() === 'gallery') {
-              <h2 class="text-2xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-300">Gallery Manager</h2>
+              <h2 class="text-2xl font-bold text-stone-800 mb-6 pb-4 border-b border-stone-300 flex justify-between items-center">
+                  Gallery Manager
+                  <span class="text-xs font-normal bg-amber-100 text-amber-800 px-2 py-1 rounded border border-amber-200">Drag to Reorder</span>
+              </h2>
+              
               <div class="bg-white p-6 themed-rounded-xl shadow-sm border border-stone-200 mb-8">
                  <h3 class="font-bold text-lg mb-4">Add New Media</h3>
                  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -527,9 +556,33 @@ import { RouterLink } from '@angular/router';
                  </div>
                  <div class="flex justify-end mt-4"><button (click)="addGalleryItem()" class="bg-green-700 text-white px-6 py-2 themed-rounded font-bold hover:bg-green-800">Add to Gallery</button></div>
               </div>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                 @for (item of templeService.gallery(); track item.id) {
-                    <div class="relative group"><img [src]="item.url" class="w-full h-32 object-cover themed-rounded shadow"><button (click)="deleteGalleryItem(item.id)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity">&times;</button></div>
+
+              <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4" (dragover)="$event.preventDefault()">
+                 @for (item of templeService.gallery(); track item.id; let i = $index) {
+                    <div 
+                        draggable="true" 
+                        (dragstart)="onDragStart($event, i)" 
+                        (dragover)="onDragOver($event, i)" 
+                        (drop)="onDrop($event, i)"
+                        class="relative group bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200"
+                        [class.opacity-50]="draggedIdx() === i"
+                        [class.scale-105]="draggedIdx() === i"
+                        [class.ring-2]="draggedIdx() === i"
+                        [class.ring-amber-400]="draggedIdx() === i"
+                    >
+                        <img [src]="item.url" class="w-full h-32 object-cover pointer-events-none">
+                        <div class="p-2 bg-white">
+                            <p class="text-xs font-bold text-stone-700 truncate" title="{{item.caption}}">{{item.caption}}</p>
+                        </div>
+                        <button (click)="deleteGalleryItem(item.id)" class="absolute top-1 right-1 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-700" title="Delete">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                        
+                        <!-- Drag Handle Indicator -->
+                        <div class="absolute top-1 left-1 bg-black/40 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                        </div>
+                    </div>
                  }
               </div>
             }
@@ -614,6 +667,11 @@ export class AdminComponent {
   reportStartDate = new Date().toISOString().split('T')[0];
   reportEndDate = new Date().toISOString().split('T')[0];
 
+  // Drag & Drop State
+  draggedIdx = signal<number | null>(null);
+
+  @ViewChild('newsContentArea') newsContentArea!: ElementRef<HTMLTextAreaElement>;
+
   // Predefined Themes
   predefinedThemes = [
     { name: 'Divine Saffron', config: { primaryColor: '#4a0404', secondaryColor: '#d97706', accentColor: '#fbbf24', backgroundColor: '#fffbeb' }},
@@ -640,11 +698,71 @@ export class AdminComponent {
       this.configForm.theme = { ...this.configForm.theme, ...themeConfig };
   }
 
+  // --- News Editor ---
+  applyFormat(format: string) {
+    const textarea = this.newsContentArea.nativeElement;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selectedText = text.substring(start, end);
+    let newText = '';
+
+    switch (format) {
+      case 'bold': newText = `<b>${selectedText}</b>`; break;
+      case 'italic': newText = `<i>${selectedText}</i>`; break;
+      case 'link': newText = `<a href="#">${selectedText || 'Link'}</a>`; break;
+      case 'h3': newText = `<h3>${selectedText}</h3>`; break;
+      case 'list': newText = `<ul>\n<li>${selectedText}</li>\n</ul>`; break;
+      case 'p': newText = `<p>${selectedText}</p>`; break;
+      default: return;
+    }
+
+    this.newsForm.content = text.substring(0, start) + newText + text.substring(end);
+    
+    // Restore focus and cursor position (approximate)
+    setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + newText.length, start + newText.length);
+    });
+  }
+
+  // --- Drag & Drop for Gallery ---
+  onDragStart(e: DragEvent, index: number) {
+    this.draggedIdx.set(index);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', index.toString());
+    }
+  }
+
+  onDragOver(e: DragEvent, index: number) {
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  }
+
+  onDrop(e: DragEvent, dropIndex: number) {
+    e.preventDefault();
+    const dragIndex = this.draggedIdx();
+    if (dragIndex !== null && dragIndex !== dropIndex) {
+      this.templeService.gallery.update(items => {
+        const newItems = [...items];
+        const [movedItem] = newItems.splice(dragIndex, 1);
+        newItems.splice(dropIndex, 0, movedItem);
+        return newItems;
+      });
+    }
+    this.draggedIdx.set(null);
+  }
+
   async handleLogin() {
       this.loginError = '';
       const res = await this.templeService.login(this.email, this.password);
       if (res.error) this.loginError = 'Authentication Failed. Please check credentials.'; 
       else if (res.requires2FA) this.requires2FA = true;
+      else if (!this.templeService.isAdmin()) {
+          this.loginError = 'Access Denied. You are not an admin.';
+          this.templeService.logout();
+      }
   }
 
   async verifyOTP() {

@@ -102,6 +102,8 @@ export interface Donation {
   amount: number;
   date: string;
   pan?: string;
+  email?: string;
+  user_id?: string;
   transactionId: string;
   status?: 'Verified' | 'Pending';
   created_at?: string;
@@ -121,6 +123,8 @@ export interface Booking {
   slot: string;
   devoteeName: string;
   mobile: string;
+  email?: string;
+  user_id?: string;
   ticketCode: string;
   status: 'Booked' | 'Cancelled' | 'Completed';
   timestamp?: string;
@@ -526,9 +530,16 @@ export class TempleService {
   private handleUser(user: User | null) {
       if (user) {
         this.currentUser.set(user);
-        this.isAdmin.set(true); 
-        this.fetchDonations().catch(() => {});
-        this.fetchFeedbacks().catch(() => {});
+        // Admin Logic: Check email or metadata
+        // For security, strict check for specific email domain or specific email
+        const isAdminUser = user.email === 'admin@uttarandhratirupati.org' || user.email === 'admin@temple.com';
+        
+        this.isAdmin.set(isAdminUser);
+        
+        if (isAdminUser) {
+           this.fetchDonations().catch(() => {});
+           this.fetchFeedbacks().catch(() => {});
+        }
       } else {
         this.currentUser.set(null);
         this.isAdmin.set(false);
@@ -536,6 +547,7 @@ export class TempleService {
       }
   }
 
+  // Admin Login with optional 2FA simulation
   async login(email: string, password: string): Promise<{ error: any; requires2FA?: boolean }> {
     try {
       const { data, error } = await this.supabase.auth.signInWithPassword({
@@ -545,11 +557,34 @@ export class TempleService {
 
       if (error) throw error;
       
-      this._pending2FASession = true;
-      return { error: null, requires2FA: true };
+      // For Admins only, trigger the 2FA flow simulation
+      if (email === 'admin@uttarandhratirupati.org' || email === 'admin@temple.com') {
+          this._pending2FASession = true;
+          return { error: null, requires2FA: true };
+      }
+      
+      return { error: null, requires2FA: false };
     } catch (error: any) {
       return { error: error.message };
     }
+  }
+
+  // Public Login (No 2FA)
+  async publicLogin(email: string, password: string) {
+      return this.supabase.auth.signInWithPassword({ email, password });
+  }
+
+  // Public Sign Up
+  async publicSignUp(email: string, password: string, fullName: string) {
+      return this.supabase.auth.signUp({
+          email,
+          password,
+          options: {
+              data: {
+                  full_name: fullName
+              }
+          }
+      });
   }
 
   async verifyTwoFactor(otp: string): Promise<boolean> {
@@ -769,11 +804,27 @@ export class TempleService {
   }
 
   async addDonation(donation: Donation) {
+      const user = this.currentUser();
       await this.supabase.from('donations').insert({
           ...donation,
+          email: user?.email,
+          user_id: user?.id,
           created_at: new Date().toISOString()
       });
       if (this.isAdmin()) this.fetchDonations();
+  }
+
+  async getUserDonations(): Promise<Donation[]> {
+      const user = this.currentUser();
+      if (!user?.email) return [];
+      
+      const { data } = await this.supabase
+          .from('donations')
+          .select('*')
+          .eq('email', user.email)
+          .order('date', { ascending: false });
+      
+      return (data as Donation[]) || [];
   }
 
   // --- Booking System (Supabase) ---
@@ -829,15 +880,35 @@ export class TempleService {
     }
   }
 
+  async getUserBookings(): Promise<Booking[]> {
+      const user = this.currentUser();
+      if (!user?.email) return [];
+
+      try {
+          const { data } = await this.supabase
+              .from('bookings')
+              .select('*')
+              .eq('email', user.email)
+              .order('date', { ascending: false });
+          return (data as Booking[]) || [];
+      } catch {
+          return [];
+      }
+  }
+
   async cancelBooking(id: string) {
       await this.supabase.from('bookings').update({ status: 'Cancelled' }).eq('id', id);
   }
 
   async bookDarshanSlot(booking: Booking): Promise<{success: boolean, ticketCode?: string, message?: string}> {
      const ticketCode = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
+     const user = this.currentUser();
+     
      try {
          const { error } = await this.supabase.from('bookings').insert({
              ...booking,
+             email: user?.email,
+             user_id: user?.id,
              ticketCode,
              timestamp: new Date().toISOString()
          });
