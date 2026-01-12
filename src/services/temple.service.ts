@@ -304,8 +304,10 @@ export class TempleService {
          console.warn("Supabase connection check:", error.message);
       }
       this.connectionStatus.set('connected');
-    } catch (e) {
-      console.warn("Supabase connection failed (using offline mode):", e);
+    } catch (e: any) {
+      if (e.name !== 'AbortError' && e.message !== 'signal is aborted without reason' && !e.message?.includes('aborted')) {
+          console.warn("Supabase connection failed (using offline mode):", e);
+      }
       this.connectionStatus.set('disconnected');
     }
   }
@@ -347,7 +349,7 @@ export class TempleService {
             });
         }
     } catch (e: any) {
-        if (e.name !== 'AbortError' && !e.message?.includes('aborted')) {
+        if (e.name !== 'AbortError' && !e.message?.includes('aborted') && e.message !== 'signal is aborted without reason') {
            console.warn("Weather fetch failed, using default:", e.message || e);
         }
     }
@@ -391,7 +393,7 @@ export class TempleService {
         this.visitorCount.set(currentCount + liveFluctuation);
 
     } catch (e: any) {
-        if (e.name !== 'AbortError') {
+        if (e.name !== 'AbortError' && e.message !== 'signal is aborted without reason' && !e.message?.includes('aborted')) {
            // Fallback to purely local simulation if IP fetch fails (Start low)
            this.visitorCount.set(Math.floor(Math.random() * 5) + 120);
         }
@@ -417,22 +419,36 @@ export class TempleService {
              this.visitorCount.set(newData.visitor_count + Math.floor(Math.random() * 5));
          }
       })
-      .subscribe();
+      .subscribe((status, err) => {
+        if (err) console.warn('Supabase subscription warning:', err);
+      });
       
-    // Initial Fetches with error handling
+    // Initial Fetches with error handling using .then(success, fail) to avoid unhandled rejections
     this.supabase.from('settings').select('data').eq('id', 'status').single()
-      .then(({ data }) => { if (data?.data?.scroll_news) this.flashNews.set(data.data.scroll_news); });
+      .then(
+        ({ data }) => { if (data?.data?.scroll_news) this.flashNews.set(data.data.scroll_news); },
+        () => {} // Suppress errors
+      );
       
     this.supabase.from('settings').select('data').eq('id', 'global').single()
-      .then(({ data }) => { if (data?.data) this.updateLocalConfig(data.data); });
+      .then(
+        ({ data }) => { if (data?.data) this.updateLocalConfig(data.data); },
+        () => {} // Suppress errors
+      );
 
     this.supabase.from('settings').select('data').eq('id', 'insights').single()
-      .then(({ data }) => { 
-          if (data?.data) this.insights.set(data.data); 
-      });
+      .then(
+        ({ data }) => { 
+            if (data?.data) this.insights.set(data.data); 
+        },
+        () => {} // Suppress errors
+      );
 
     this.supabase.from('settings').select('data').eq('id', 'panchangam').single()
-      .then(({ data }) => { if (data?.data) this.dailyPanchangam.set(data.data); });
+      .then(
+        ({ data }) => { if (data?.data) this.dailyPanchangam.set(data.data); },
+        () => {} // Suppress errors
+      );
   }
 
   private updateLocalConfig(data: any) {
@@ -574,8 +590,10 @@ export class TempleService {
       } else {
         this.news.set(this.getFallbackNews());
       }
-    } catch (e) {
-      console.warn('News fetch exception (Using Fallback):', e);
+    } catch (e: any) {
+      if (e.name !== 'AbortError' && e.message !== 'signal is aborted without reason' && !e.message?.includes('aborted')) {
+        console.warn('News fetch exception (Using Fallback):', e);
+      }
       this.news.set(this.getFallbackNews());
     }
   }

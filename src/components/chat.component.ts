@@ -1,3 +1,4 @@
+
 import { Component, inject, signal, ViewChild, ElementRef, AfterViewChecked, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -194,8 +195,10 @@ export class ChatComponent implements AfterViewChecked {
       const text = response.text;
       
       this.messages.update(msgs => [...msgs, { id: Date.now().toString(), role: 'model', text }]);
-    } catch (error) {
-      console.error('Chat error:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError' && error.message !== 'signal is aborted without reason' && !error.message?.includes('aborted')) {
+          console.error('Chat error:', error);
+      }
       this.messages.update(msgs => [...msgs, { id: Date.now().toString(), role: 'model', text: 'Apologies, I am having trouble connecting to the divine network. Please try again later.' }]);
     } finally {
       this.isLoading.set(false);

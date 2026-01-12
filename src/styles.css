@@ -5,7 +5,7 @@ body {
   margin: 0;
   padding: 0;
   background-color: #fffbeb; /* Cream/Off-white base */
-  color: #292524; /* Stone-800 for better readability */
+  color: #d3bbb5; /* Stone-800 for better readability */
   overflow-x: hidden;
 }
 
@@ -85,7 +85,7 @@ h1, h2, h3, h4, h5, h6, .serif-font {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 6px -1px rgba(105, 104, 104, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 /* Divider shape */
