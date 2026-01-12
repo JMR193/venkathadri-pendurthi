@@ -432,14 +432,18 @@ export class BookingComponent {
       this.step.set('success');
     } else {
       alert(result.message || 'Booking failed. Please try again.');
+      
+      // Smart Handling: If slot is full, refresh UI and take user back to selection
+      if (result.type === 'SLOT_FULL') {
+          this.step.set('date');
+          this.selectedSlot.set(null);
+          this.fetchSlots();
+      }
     }
     this.isBooking.set(false);
   }
 
   printTicket(ticket?: any) {
-    // In a real app, this would generate a PDF or open a specific print view.
-    // For now, we rely on browser print and CSS to hide non-ticket elements.
-    // Ideally we would set a 'printData' signal and show a modal, then print that.
     window.print();
   }
   

@@ -46,6 +46,63 @@ import { CommonModule } from '@angular/common';
        </div>
     </div>
 
+    <!-- Featured Panchangam Section (Automatic Update) -->
+    <div class="bg-gradient-to-r from-red-900 to-[#800000] text-amber-50 py-6 border-b-4 border-amber-500 shadow-xl relative overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+        
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <!-- Date Header -->
+                <div class="flex items-center gap-4 border-r border-amber-700/50 pr-6 mr-4 min-w-max">
+                    <div class="text-center bg-white/10 rounded-lg p-2 backdrop-blur-sm border border-white/20">
+                        <span class="block text-xs uppercase tracking-wider text-amber-300">Today</span>
+                        <span class="block text-2xl font-bold font-serif leading-none">{{ templeService.dailyPanchangam().date | date:'dd' }}</span>
+                        <span class="block text-xs font-bold">{{ templeService.dailyPanchangam().date | date:'MMM' }}</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold font-serif text-amber-300">Daily Panchangam</h3>
+                        <p class="text-xs text-amber-100 opacity-80">{{ templeService.dailyPanchangam().date }}</p>
+                    </div>
+                </div>
+
+                <!-- Scrollable/Grid Data -->
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-8 gap-y-4 text-sm w-full">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Tithi</span>
+                        <span class="font-semibold">{{ templeService.dailyPanchangam().tithi }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Nakshatra</span>
+                        <span class="font-semibold">{{ templeService.dailyPanchangam().nakshatra }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Rahu Kalam</span>
+                        <span class="font-semibold text-red-200">{{ templeService.dailyPanchangam().rahuKalam }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Yamagandam</span>
+                        <span class="font-semibold text-red-200">{{ templeService.dailyPanchangam().yamagandam }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Sunrise</span>
+                        <span class="font-semibold flex items-center gap-1">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
+                           {{ templeService.dailyPanchangam().sunrise }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] uppercase text-amber-400 font-bold tracking-wider">Sunset</span>
+                        <span class="font-semibold flex items-center gap-1">
+                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" /></svg>
+                           {{ templeService.dailyPanchangam().sunset }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Pilgrim Services Dashboard (AP Gov Portal Clone) -->
     <div class="bg-[#f0f2f5] py-16">
        <div class="container mx-auto px-4">
@@ -151,67 +208,33 @@ import { CommonModule } from '@angular/common';
        </div>
     </div>
 
-    <!-- Info Stats & Panchangam Row -->
+    <!-- Info Stats -->
     <div class="bg-stone-50 py-16 border-t border-stone-200">
-       <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+       <div class="container mx-auto px-4 flex justify-center">
           <!-- Live Stats (Wait Time) -->
-          <div class="lg:col-span-1 bg-white rounded border border-stone-200 shadow-sm p-6 relative overflow-hidden">
-             <div class="absolute top-0 left-0 w-full h-1 bg-[#800000]"></div>
-             <h4 class="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">
-                <span class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-[#800000]">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+          <div class="w-full max-w-4xl bg-white rounded border border-stone-200 shadow-sm p-6 relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
+             <div class="absolute top-0 left-0 w-full md:w-1 h-1 md:h-full bg-[#800000]"></div>
+             
+             <div class="flex-shrink-0">
+                <span class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-[#800000]">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </span>
-                Darshan Status
-             </h4>
-             <div class="space-y-6">
-                <div class="flex justify-between items-center border-b border-dashed border-stone-200 pb-3">
-                   <span class="text-stone-600 text-sm font-medium">Sarva Darshan Wait Time</span>
-                   <span class="font-bold text-2xl text-[#800000]">{{ templeService.insights().darshanWaitTime }} <span class="text-xs font-normal text-stone-500">mins</span></span>
+             </div>
+             
+             <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-center md:text-left">
+                <div>
+                   <span class="text-stone-600 text-sm font-medium block mb-1">Sarva Darshan Wait Time</span>
+                   <span class="font-bold text-3xl text-[#800000]">{{ templeService.insights().darshanWaitTime }} <span class="text-sm font-normal text-stone-500">mins</span></span>
                 </div>
-                <div class="flex justify-between items-center border-b border-dashed border-stone-200 pb-3">
-                   <span class="text-stone-600 text-sm font-medium">Crowd Density</span>
-                   <span class="font-bold text-sm px-3 py-1 rounded-full bg-amber-100 text-amber-800 uppercase">{{ templeService.insights().crowdStatus }}</span>
+                <div>
+                   <span class="text-stone-600 text-sm font-medium block mb-1">Crowd Density</span>
+                   <span class="font-bold text-sm px-3 py-1 rounded-full bg-amber-100 text-amber-800 uppercase inline-block">{{ templeService.insights().crowdStatus }}</span>
                 </div>
-                <div class="flex justify-between items-center">
-                   <span class="text-stone-600 text-sm font-medium">Laddu Prasadam</span>
-                   <span class="font-bold text-sm px-3 py-1 rounded-full bg-green-100 text-green-800 uppercase flex items-center gap-1">
+                <div>
+                   <span class="text-stone-600 text-sm font-medium block mb-1">Laddu Prasadam</span>
+                   <span class="font-bold text-sm px-3 py-1 rounded-full bg-green-100 text-green-800 uppercase flex items-center justify-center md:justify-start gap-1 inline-block">
                       <span class="w-2 h-2 rounded-full bg-green-500"></span> Available
                    </span>
-                </div>
-             </div>
-          </div>
-
-          <!-- Daily Panchangam -->
-          <div class="lg:col-span-2 bg-[#800000] rounded shadow-lg p-8 text-white relative overflow-hidden flex flex-col justify-center">
-             <!-- Background Texture -->
-             <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E');"></div>
-             
-             <div class="relative z-10">
-                <div class="flex items-center gap-3 mb-6">
-                    <span class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-amber-300"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" /></svg>
-                    </span>
-                    <h4 class="text-2xl font-serif font-bold text-amber-300">Daily Panchangam</h4>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                   <div class="border-l-2 border-amber-500/30 pl-4">
-                      <p class="text-[10px] uppercase tracking-widest text-amber-200 mb-1">Date</p>
-                      <p class="font-bold text-lg leading-tight">{{ templeService.dailyPanchangam().date }}</p>
-                   </div>
-                   <div class="border-l-2 border-amber-500/30 pl-4">
-                      <p class="text-[10px] uppercase tracking-widest text-amber-200 mb-1">Tithi</p>
-                      <p class="font-bold text-lg leading-tight">{{ templeService.dailyPanchangam().tithi }}</p>
-                   </div>
-                   <div class="border-l-2 border-amber-500/30 pl-4">
-                      <p class="text-[10px] uppercase tracking-widest text-amber-200 mb-1">Nakshatra</p>
-                      <p class="font-bold text-lg leading-tight">{{ templeService.dailyPanchangam().nakshatra }}</p>
-                   </div>
-                   <div class="border-l-2 border-amber-500/30 pl-4">
-                      <p class="text-[10px] uppercase tracking-widest text-amber-200 mb-1">Rahu Kalam</p>
-                      <p class="font-bold text-lg leading-tight">{{ templeService.dailyPanchangam().rahuKalam }}</p>
-                   </div>
                 </div>
              </div>
           </div>

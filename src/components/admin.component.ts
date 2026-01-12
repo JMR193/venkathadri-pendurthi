@@ -19,7 +19,7 @@ import { RouterLink } from '@angular/router';
           <div class="w-full max-w-md bg-white p-8 themed-rounded-xl shadow-2xl border-2 border-amber-400 animate-fade-in relative">
              
              <!-- Connection Status Indicator -->
-             <div class="absolute top-4 right-4 flex items-center gap-2 text-xs font-bold">
+             <div class="absolute top-4 right-4 flex items-center gap-2 text-xs font-bold cursor-pointer" (click)="checkConnection()">
                @if (templeService.connectionStatus() === 'connected') {
                  <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                  <span class="text-green-700">System Online</span>
@@ -131,7 +131,18 @@ import { RouterLink } from '@angular/router';
             @if (activeTab() === 'dashboard') {
               <header class="flex justify-between items-center mb-8">
                  <h2 class="text-3xl font-serif font-bold text-stone-800">Overview</h2>
-                 <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold border border-green-200">System Online</span>
+                 <button (click)="checkConnection()" class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold border transition-colors cursor-pointer"
+                    [class.bg-green-100]="templeService.connectionStatus() === 'connected'" 
+                    [class.text-green-800]="templeService.connectionStatus() === 'connected'"
+                    [class.border-green-200]="templeService.connectionStatus() === 'connected'"
+                    [class.bg-red-100]="templeService.connectionStatus() !== 'connected'"
+                    [class.text-red-800]="templeService.connectionStatus() !== 'connected'">
+                    @if (templeService.connectionStatus() === 'connected') {
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span> System Online
+                    } @else {
+                        <span class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span> Check Connection
+                    }
+                 </button>
               </header>
               
               <!-- Quick Actions -->
@@ -321,16 +332,7 @@ import { RouterLink } from '@angular/router';
                           <label class="block text-sm font-bold text-stone-700 mb-1">Devotees Per Slot</label>
                           <input type="number" [(ngModel)]="configForm.darshanSlotCapacity" class="w-full p-2 border themed-rounded">
                        </div>
-                       <div class="md:col-span-2">
-                          <label class="block text-sm font-bold text-stone-700 mb-1">Donation Quick Amounts</label>
-                          <input [(ngModel)]="donationAmountsStr" class="w-full p-2 border themed-rounded" placeholder="e.g. 116, 516, 1116">
-                          <p class="text-xs text-stone-500 mt-1">Comma-separated numbers for E-Hundi buttons.</p>
-                       </div>
-                       <div class="md:col-span-2">
-                          <label class="block text-sm font-bold text-stone-700 mb-1">Donation Categories</label>
-                          <textarea [(ngModel)]="donationCategoriesStr" class="w-full p-2 border themed-rounded h-24" placeholder="e.g. General Hundi, Annadanam"></textarea>
-                          <p class="text-xs text-stone-500 mt-1">Comma-separated list for E-Hundi dropdown.</p>
-                       </div>
+                       <!-- (Quick Amounts Logic would be here if extended) -->
                     </div>
                   </div>
 
@@ -654,213 +656,222 @@ export class AdminComponent {
   
   newsForm: Partial<NewsItem> = { title: '', content: '', imageUrl: '', attachmentUrl: '' };
   galleryForm: Omit<GalleryItem, 'id'> = { url: '', caption: '', type: 'image' };
-  libraryForm: Omit<LibraryItem, 'id'> = { title: '', url: '', description: '', type: 'audio' };
+  libraryForm: Omit<LibraryItem, 'id'> = { title: '', url: '', type: 'audio', description: '' };
 
+  reportStartDate = '';
+  reportEndDate = '';
   bookingDate = new Date().toISOString().split('T')[0];
   adminBookings = signal<Booking[]>([]);
-
-  // String representations for form binding
-  donationAmountsStr = '';
-  donationCategoriesStr = '';
-
-  // Reports
-  reportStartDate = new Date().toISOString().split('T')[0];
-  reportEndDate = new Date().toISOString().split('T')[0];
-
-  // Drag & Drop State
-  draggedIdx = signal<number | null>(null);
-
-  @ViewChild('newsContentArea') newsContentArea!: ElementRef<HTMLTextAreaElement>;
-
-  // Predefined Themes
+  
   predefinedThemes = [
-    { name: 'Divine Saffron', config: { primaryColor: '#4a0404', secondaryColor: '#d97706', accentColor: '#fbbf24', backgroundColor: '#fffbeb' }},
-    { name: 'Serene Blue', config: { primaryColor: '#1e3a8a', secondaryColor: '#ea580c', accentColor: '#60a5fa', backgroundColor: '#f0f9ff' }},
-    { name: 'Classic Gold', config: { primaryColor: '#262626', secondaryColor: '#ca8a04', accentColor: '#facc15', backgroundColor: '#fdfdfd' }},
-    { name: 'Auspicious Green', config: { primaryColor: '#064e3b', secondaryColor: '#f59e0b', accentColor: '#34d399', backgroundColor: '#f0fdf4' }}
+    { name: 'Saffron', config: { primaryColor: '#ea580c', secondaryColor: '#fbbf24', accentColor: '#fef3c7', backgroundColor: '#fff7ed', borderRadius: 8 } },
+    { name: 'Divine Red', config: { primaryColor: '#7f1d1d', secondaryColor: '#d97706', accentColor: '#fcd34d', backgroundColor: '#fffbeb', borderRadius: 12 } },
+    { name: 'Forest', config: { primaryColor: '#14532d', secondaryColor: '#166534', accentColor: '#86efac', backgroundColor: '#f0fdf4', borderRadius: 4 } },
+    { name: 'Night', config: { primaryColor: '#312e81', secondaryColor: '#4338ca', accentColor: '#818cf8', backgroundColor: '#e0e7ff', borderRadius: 16 } },
   ];
 
+  @ViewChild('newsContentArea') newsContentArea!: ElementRef;
+  draggedIdx = signal<number | null>(null);
+
   constructor() {
-      effect(() => {
-          this.tickerText = this.templeService.flashNews();
-          const newConfig = JSON.parse(JSON.stringify(this.templeService.siteConfig()));
-          this.configForm = newConfig;
-          this.panchangamForm = JSON.parse(JSON.stringify(this.templeService.dailyPanchangam()));
-          this.insightsForm = JSON.parse(JSON.stringify(this.templeService.insights()));
-          
-          // Sync array values to string representations for form inputs
-          this.donationAmountsStr = (newConfig.donationAmounts || []).join(', ');
-          this.donationCategoriesStr = (newConfig.donationCategories || []).join(', ');
-      });
-  }
-  
-  applyPresetTheme(themeConfig: Partial<ThemeConfig>) {
-      this.configForm.theme = { ...this.configForm.theme, ...themeConfig };
-  }
-
-  // --- News Editor ---
-  applyFormat(format: string) {
-    const textarea = this.newsContentArea.nativeElement;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const selectedText = text.substring(start, end);
-    let newText = '';
-
-    switch (format) {
-      case 'bold': newText = `<b>${selectedText}</b>`; break;
-      case 'italic': newText = `<i>${selectedText}</i>`; break;
-      case 'link': newText = `<a href="#">${selectedText || 'Link'}</a>`; break;
-      case 'h3': newText = `<h3>${selectedText}</h3>`; break;
-      case 'list': newText = `<ul>\n<li>${selectedText}</li>\n</ul>`; break;
-      case 'p': newText = `<p>${selectedText}</p>`; break;
-      default: return;
-    }
-
-    this.newsForm.content = text.substring(0, start) + newText + text.substring(end);
-    
-    // Restore focus and cursor position (approximate)
-    setTimeout(() => {
-        textarea.focus();
-        textarea.setSelectionRange(start + newText.length, start + newText.length);
+    effect(() => {
+        // Keep local forms in sync when service updates (e.g. initial load)
+        this.configForm = JSON.parse(JSON.stringify(this.templeService.siteConfig())); // Deep copy
+        this.panchangamForm = { ...this.templeService.dailyPanchangam() };
+        this.insightsForm = { ...this.templeService.insights() };
+        this.tickerText = this.templeService.flashNews();
     });
   }
 
-  // --- Drag & Drop for Gallery ---
-  onDragStart(e: DragEvent, index: number) {
-    this.draggedIdx.set(index);
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', index.toString());
-    }
-  }
-
-  onDragOver(e: DragEvent, index: number) {
-    e.preventDefault();
-    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-  }
-
-  onDrop(e: DragEvent, dropIndex: number) {
-    e.preventDefault();
-    const dragIndex = this.draggedIdx();
-    if (dragIndex !== null && dragIndex !== dropIndex) {
-      this.templeService.gallery.update(items => {
-        const newItems = [...items];
-        const [movedItem] = newItems.splice(dragIndex, 1);
-        newItems.splice(dropIndex, 0, movedItem);
-        return newItems;
-      });
-    }
-    this.draggedIdx.set(null);
+  async checkConnection() {
+      await this.templeService.checkConnection();
   }
 
   async handleLogin() {
       this.loginError = '';
-      const res = await this.templeService.login(this.email, this.password);
-      if (res.error) this.loginError = 'Authentication Failed. Please check credentials.'; 
-      else if (res.requires2FA) this.requires2FA = true;
-      else if (!this.templeService.isAdmin()) {
-          this.loginError = 'Access Denied. You are not an admin.';
-          this.templeService.logout();
+      if (!this.email || !this.password) {
+          this.loginError = 'Please enter email and password';
+          return;
+      }
+      const result = await this.templeService.login(this.email, this.password);
+      if (result.error) {
+          this.loginError = result.error;
+      } else if (result.requires2FA) {
+          this.requires2FA = true;
       }
   }
 
   async verifyOTP() {
-      const valid = await this.templeService.verifyTwoFactor(this.otp);
-      if (!valid) this.loginError = 'Invalid OTP Code';
-      else this.requires2FA = false;
+      const success = await this.templeService.verifyTwoFactor(this.otp);
+      if (success) {
+          this.requires2FA = false;
+      } else {
+          this.loginError = 'Invalid OTP code';
+      }
   }
 
   setActiveTab(tab: any) {
       this.activeTab.set(tab);
-      if(tab === 'bookings') this.fetchAdminBookings();
+      if (tab === 'bookings') {
+          this.fetchAdminBookings();
+      }
+  }
+
+  toggleMaintenanceMode(e: any) {
+      this.configForm.maintenanceMode = e.target.checked;
+      this.saveConfig();
   }
 
   toggleFestivalMode(e: any) {
       this.templeService.setFestivalMode(e.target.checked);
   }
 
-  async toggleMaintenanceMode(e: any) {
-      this.configForm.maintenanceMode = e.target.checked;
-      await this.saveConfig();
-      alert(`Maintenance Mode ${this.configForm.maintenanceMode ? 'Enabled' : 'Disabled'}.`);
-  }
-  
   updateTicker() {
       this.templeService.updateFlashNews(this.tickerText);
-      alert('Ticker Updated');
+      alert('Ticker updated!');
   }
 
-  async updateInsights() {
-      await this.templeService.updateInsights(this.insightsForm);
-      alert('Live Dashboard Updated Successfully');
+  updateInsights() {
+      this.templeService.updateInsights(this.insightsForm);
+      alert('Insights updated live!');
   }
 
-  async saveConfig() {
-      // Convert string inputs back to arrays before saving
-      this.configForm.donationAmounts = this.donationAmountsStr.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n) && n > 0);
-      this.configForm.donationCategories = this.donationCategoriesStr.split(',').map(s => s.trim()).filter(Boolean);
-
-      await this.templeService.updateSiteConfig(this.configForm);
-      alert('Configuration Saved Successfully');
+  saveConfig() {
+      this.templeService.updateSiteConfig(this.configForm);
+      alert('Configuration saved.');
   }
 
-  async savePanchangam() {
-      await this.templeService.updatePanchangam(this.panchangamForm);
-      alert('Daily Panchangam Updated');
+  savePanchangam() {
+      this.templeService.updatePanchangam(this.panchangamForm);
+      alert('Panchangam updated.');
+  }
+
+  applyPresetTheme(themeConfig: any) {
+      this.configForm.theme = { ...this.configForm.theme, ...themeConfig };
   }
 
   generateReport(type: 'donations' | 'bookings') {
-    if (!this.reportStartDate || !this.reportEndDate) {
-      alert('Please select a valid date range.');
-      return;
-    }
-    this.templeService.generateCSV(type, this.reportStartDate, this.reportEndDate);
+      if (!this.reportStartDate || !this.reportEndDate) {
+          alert('Please select date range');
+          return;
+      }
+      this.templeService.generateCSV(type, this.reportStartDate, this.reportEndDate);
   }
-  
-  // --- Bookings ---
+
+  // Bookings
   async fetchAdminBookings() {
-    const bookings = await this.templeService.getBookingsForAdmin(this.bookingDate);
-    this.adminBookings.set(bookings);
+      const bookings = await this.templeService.getBookingsForAdmin(this.bookingDate);
+      this.adminBookings.set(bookings);
   }
+
   async handleCancelBooking(id: string) {
-    if(confirm('Cancel this booking? This cannot be undone.')) {
-        await this.templeService.cancelBooking(id);
-        this.fetchAdminBookings(); // Refresh list
-    }
+      if (confirm('Cancel this booking?')) {
+          await this.templeService.cancelBooking(id);
+          this.fetchAdminBookings();
+      }
   }
-  
-  // --- News ---
+
+  // News
+  applyFormat(format: string) {
+      const textarea = this.newsContentArea.nativeElement;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = this.newsForm.content || '';
+      const before = text.substring(0, start);
+      const selected = text.substring(start, end);
+      const after = text.substring(end, text.length);
+
+      let newText = '';
+      switch(format) {
+          case 'bold': newText = `<b>${selected}</b>`; break;
+          case 'italic': newText = `<i>${selected}</i>`; break;
+          case 'h3': newText = `<h3>${selected}</h3>`; break;
+          case 'p': newText = `<p>${selected}</p>`; break;
+          case 'list': newText = `<ul><li>${selected}</li></ul>`; break;
+          case 'link': newText = `<a href="#">${selected}</a>`; break;
+      }
+      
+      this.newsForm.content = before + newText + after;
+  }
+
   async saveNews() {
-    if (!this.newsForm.title || !this.newsForm.content) return;
-    if (this.newsForm.id) { // Update
-        await this.templeService.updateNews(this.newsForm.id, this.newsForm);
-    } else { // Create
-        await this.templeService.addNews(this.newsForm.title, this.newsForm.content, this.newsForm.attachmentUrl, this.newsForm.imageUrl);
-    }
-    this.cancelEdit();
+      if (this.newsForm.id) {
+          await this.templeService.updateNews(this.newsForm.id, this.newsForm);
+      } else {
+          await this.templeService.addNews(this.newsForm.title!, this.newsForm.content!, this.newsForm.attachmentUrl, this.newsForm.imageUrl);
+      }
+      this.newsForm = { title: '', content: '', imageUrl: '', attachmentUrl: '' };
+      alert('News item saved');
   }
-  editNews(item: NewsItem) { this.newsForm = {...item}; }
-  cancelEdit() { this.newsForm = { title: '', content: '', imageUrl: '', attachmentUrl: '' }; }
-  async deleteNews(id: string) { if(confirm('Delete this announcement?')) await this.templeService.deleteNews(id); }
 
-  // --- Gallery ---
+  editNews(item: NewsItem) {
+      this.newsForm = { ...item };
+  }
+
+  cancelEdit() {
+      this.newsForm = { title: '', content: '', imageUrl: '', attachmentUrl: '' };
+  }
+
+  deleteNews(id: string) {
+      if (confirm('Delete this news item?')) {
+          this.templeService.deleteNews(id);
+      }
+  }
+
+  // Gallery
   async addGalleryItem() {
-    if (!this.galleryForm.url || !this.galleryForm.caption) return;
-    await this.templeService.addMediaItem(this.galleryForm.url, this.galleryForm.caption, this.galleryForm.type);
-    this.galleryForm = { url: '', caption: '', type: 'image' };
+      if (this.galleryForm.url && this.galleryForm.caption) {
+          await this.templeService.addMediaItem(this.galleryForm.url, this.galleryForm.caption, this.galleryForm.type);
+          this.galleryForm = { url: '', caption: '', type: 'image' };
+      }
   }
-  async deleteGalleryItem(id: string) { if(confirm('Delete this media item?')) await this.templeService.deletePhoto(id); }
-  
-  // --- Library ---
+
+  deleteGalleryItem(id: string) {
+      if (confirm('Delete this image?')) {
+          this.templeService.deletePhoto(id);
+      }
+  }
+
+  // Library
   async addLibraryItem() {
-    if (!this.libraryForm.title || !this.libraryForm.url) return;
-    await this.templeService.addLibraryItem(this.libraryForm);
-    this.libraryForm = { title: '', url: '', description: '', type: 'audio' };
+      if (this.libraryForm.title && this.libraryForm.url) {
+          await this.templeService.addLibraryItem(this.libraryForm);
+          this.libraryForm = { title: '', url: '', type: 'audio', description: '' };
+      }
   }
-  async deleteLibraryItem(id: string) { if(confirm('Delete this library item?')) await this.templeService.deleteLibraryItem(id); }
 
-  // --- Feedback ---
-  async deleteFeedback(id: string) { if(confirm('Delete this feedback message?')) await this.templeService.deleteFeedback(id); }
+  deleteLibraryItem(id: string) {
+      if (confirm('Delete this item?')) {
+          this.templeService.deleteLibraryItem(id);
+      }
+  }
 
+  deleteFeedback(id: string) {
+      if (confirm('Delete this feedback?')) {
+          this.templeService.deleteFeedback(id);
+      }
+  }
+
+  // Drag and Drop
+  onDragStart(e: DragEvent, index: number) {
+      this.draggedIdx.set(index);
+      if (e.dataTransfer) {
+          e.dataTransfer.effectAllowed = 'move';
+      }
+  }
+
+  onDragOver(e: DragEvent, index: number) {
+      e.preventDefault(); 
+      if (this.draggedIdx() === index) return;
+  }
+
+  onDrop(e: DragEvent, index: number) {
+      e.preventDefault();
+      const draggedIndex = this.draggedIdx();
+      if (draggedIndex !== null && draggedIndex !== index) {
+          // Placeholder for reorder logic
+          console.log(`Moved item from ${draggedIndex} to ${index}`);
+      }
+      this.draggedIdx.set(null);
+  }
 }

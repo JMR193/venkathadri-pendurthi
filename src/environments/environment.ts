@@ -6,5 +6,5 @@ export const environment = {
     storageUrl: "https://opwncdejpaeltylplvhk.storage.supabase.co/storage/v1/s3",
     region: "ap-southeast-1"
   },
-  production: true
+  production: false
 };

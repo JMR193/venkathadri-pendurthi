@@ -281,6 +281,7 @@ export class TempleService {
 
   constructor() {
     this.calculateTimeOfDay();
+    this.calculateDailyPanchangam();
     
     // Initialize Supabase
     if (!environment.supabase.url || !environment.supabase.key) {
@@ -309,12 +310,58 @@ export class TempleService {
     return localDate.toISOString().split('T')[0];
   }
 
+  // --- Automatic Panchangam Calculation ---
+  private calculateDailyPanchangam() {
+    const now = new Date();
+    const day = now.getDay(); // 0-6
+    
+    // Rahu Kalam Times (Standard Charts)
+    const rahu = [
+      '04:30 PM - 06:00 PM', // Sun
+      '07:30 AM - 09:00 AM', // Mon
+      '03:00 PM - 04:30 PM', // Tue
+      '12:00 PM - 01:30 PM', // Wed
+      '01:30 PM - 03:00 PM', // Thu
+      '10:30 AM - 12:00 PM', // Fri
+      '09:00 AM - 10:30 AM'  // Sat
+    ];
+    
+    // Yamagandam Times (Standard Charts)
+    const yama = [
+      '12:00 PM - 01:30 PM', // Sun
+      '10:30 AM - 12:00 PM', // Mon
+      '09:00 AM - 10:30 AM', // Tue
+      '07:30 AM - 09:00 AM', // Wed
+      '06:00 AM - 07:30 AM', // Thu
+      '03:00 PM - 04:30 PM', // Fri
+      '01:30 PM - 03:00 PM'  // Sat
+    ];
+
+    this.dailyPanchangam.update(current => ({
+      ...current,
+      date: now.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+      rahuKalam: rahu[day],
+      yamagandam: yama[day],
+      sunrise: '06:02 AM', // Generic avg for Visakhapatnam
+      sunset: '06:18 PM'
+    }));
+  }
+
   async checkConnection() {
     try {
+      this.connectionStatus.set('checking');
+      // Try to fetch settings. If table missing or RLS error, we treat it as partial connection but not fully offline
       const { data, error } = await this.supabase.from('settings').select('id').limit(1);
-      if (error && error.code !== 'PGRST116') { 
-         // Warn but don't error out console if table doesn't exist yet
-         console.warn("Supabase connection check:", error.message);
+      
+      if (error) {
+         if (error.code !== 'PGRST116') { // PGRST116 is JSON empty result, which is fine (table empty)
+             console.warn("Supabase connection warning:", error.message);
+             // If the error is network related, then we are disconnected
+             if (error.message.includes('FetchError') || error.message.toLowerCase().includes('network')) {
+                 this.connectionStatus.set('disconnected');
+                 return;
+             }
+         }
       }
       this.connectionStatus.set('connected');
     } catch (e: any) {
@@ -459,7 +506,7 @@ export class TempleService {
 
     this.supabase.from('settings').select('data').eq('id', 'panchangam').single()
       .then(
-        ({ data }) => { if (data?.data) this.dailyPanchangam.set(data.data); },
+        ({ data }) => { if (data?.data) this.dailyPanchangam.set({ ...this.dailyPanchangam(), ...data.data }); }, // Merge so live calculation persists for missing fields
         () => {} // Suppress errors
       );
   }
@@ -900,7 +947,25 @@ export class TempleService {
       await this.supabase.from('bookings').update({ status: 'Cancelled' }).eq('id', id);
   }
 
-  async bookDarshanSlot(booking: Booking): Promise<{success: boolean, ticketCode?: string, message?: string}> {
+  async bookDarshanSlot(booking: Booking): Promise<{success: boolean, ticketCode?: string, message?: string, type?: 'SLOT_FULL' | 'NETWORK' | 'GENERIC'}> {
+     // 1. Double check availability to prevent race conditions
+     const capacity = this.siteConfig().darshanSlotCapacity || 50;
+     const { count, error: countError } = await this.supabase
+         .from('bookings')
+         .select('*', { count: 'exact', head: true })
+         .eq('date', booking.date)
+         .eq('slot', booking.slot)
+         .eq('status', 'Booked');
+
+     if (countError) {
+          return { success: false, message: 'Unable to verify slot availability. Please check your internet connection.', type: 'NETWORK' };
+     }
+
+     if ((count || 0) >= capacity) {
+         return { success: false, message: 'Alas! This slot has just been filled by another devotee. Please select a different time slot.', type: 'SLOT_FULL' };
+     }
+
+     // 2. Proceed to Book if available
      const ticketCode = 'TKT-' + Math.floor(100000 + Math.random() * 900000);
      const user = this.currentUser();
      
@@ -916,7 +981,8 @@ export class TempleService {
          if (error) throw error;
          return { success: true, ticketCode };
      } catch (e: any) {
-         return { success: false, message: e.message || 'Booking failed. Please try again.' };
+         console.error("Booking Error", e);
+         return { success: false, message: 'Booking failed due to a technical error. Please try again.', type: 'GENERIC' };
      }
   }
 
