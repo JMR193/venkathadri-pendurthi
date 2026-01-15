@@ -7,7 +7,6 @@ import { provideRouter, withHashLocation, Routes } from '@angular/router';
 import { AppComponent } from './src/app.component';
 import { HomeComponent } from './src/components/home.component';
 import { AdminComponent } from './src/components/admin.component';
-import { AuthComponent } from './src/components/auth.component';
 import { EHundiComponent } from './src/components/ehundi.component';
 import { GalleryComponent } from './src/components/gallery.component';
 import { FeedbackComponent } from './src/components/feedback.component';
@@ -20,7 +19,6 @@ const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'history', component: HistoryComponent },
   { path: 'admin', component: AdminComponent },
-  { path: 'login', component: AuthComponent },
   { path: 'e-hundi', component: EHundiComponent },
   { path: 'gallery', component: GalleryComponent },
   { path: 'library', component: LibraryComponent },

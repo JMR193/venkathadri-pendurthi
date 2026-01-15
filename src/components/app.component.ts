@@ -1,11 +1,13 @@
+
 import { Component, ChangeDetectionStrategy, inject, signal, ViewChild, ElementRef } from '@angular/core';
 import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { TempleService } from '../services/temple.service';
+import { ChatComponent } from './chat.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ChatComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen flex flex-col bg-stone-50">
@@ -42,15 +44,27 @@ import { TempleService } from '../services/temple.service';
             </button>
           </div>
 
-          <div class="flex gap-4">
+          <div class="flex gap-4 items-center">
             <a [href]="'tel:' + templeService.siteConfig().contactPhone" class="hover:text-white transition-colors">Help Desk: {{ templeService.siteConfig().contactPhone }}</a>
-            <span>|</span>
-            <a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-white transition-colors animate-pulse font-bold text-amber-400">Live Darshan</a>
-            <span>|</span>
-            @if (templeService.isAdmin()) {
-              <button (click)="templeService.logout()" class="font-bold text-amber-400 hover:text-amber-200">Logout (Admin)</button>
+            <span class="opacity-50">|</span>
+            <a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-white transition-colors animate-pulse font-bold text-amber-400 flex items-center gap-1">
+               <span class="w-2 h-2 rounded-full bg-red-500"></span> Live Darshan
+            </a>
+            <span class="opacity-50">|</span>
+            
+            @if (templeService.currentUser()) {
+               @if (templeService.isAdmin()) {
+                  <span class="font-bold text-amber-400">Admin</span>
+                  <a routerLink="/admin" class="hover:text-white transition-colors">Dashboard</a>
+               } @else {
+                  <span class="font-bold text-amber-400">Welcome, Devotee</span>
+                  <a routerLink="/booking" class="hover:text-white transition-colors">My Profile</a>
+               }
+               <button (click)="templeService.logout()" class="hover:text-red-300 font-bold ml-2">Logout</button>
             } @else {
-              <a routerLink="/admin" class="hover:text-white transition-colors">Admin Login</a>
+               <a routerLink="/login" class="font-bold text-amber-200 hover:text-white transition-colors">Log In / Sign Up</a>
+               <span class="opacity-50">|</span>
+               <a routerLink="/admin" class="hover:text-white transition-colors text-xs opacity-70">Admin Login</a>
             }
           </div>
         </div>
@@ -71,7 +85,7 @@ import { TempleService } from '../services/temple.service';
           </div>
 
           <!-- Desktop Nav -->
-          <nav class="hidden lg:flex gap-1">
+          <nav class="hidden lg:flex gap-1 items-center">
             <a routerLink="/" routerLinkActive="bg-red-50 text-red-800" [routerLinkActiveOptions]="{exact: true}" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors">Home</a>
             <a routerLink="/history" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors">History</a>
             <a routerLink="/booking" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors flex items-center gap-1">
@@ -82,8 +96,14 @@ import { TempleService } from '../services/temple.service';
             <a routerLink="/library" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors">Library</a>
             <a routerLink="/gallery" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors">Gallery</a>
             <a routerLink="/feedback" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-stone-700 hover:bg-red-50 hover:text-red-800 transition-colors">Feedback</a>
+            
             @if (templeService.isAdmin()) {
-              <a routerLink="/admin" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-amber-700 border border-amber-200 bg-amber-50">CMS</a>
+              <a routerLink="/admin" routerLinkActive="bg-red-50 text-red-800" class="px-3 py-2 rounded-lg font-bold text-amber-700 border border-amber-200 bg-amber-50 ml-2">CMS Dashboard</a>
+            } @else {
+              <!-- Explicit Admin Login Link for visibility -->
+              <a routerLink="/admin" class="ml-2 px-3 py-1 rounded text-xs font-bold text-stone-400 hover:text-amber-700 hover:bg-stone-100 transition-colors border border-transparent hover:border-stone-200">
+                 Admin Login
+              </a>
             }
           </nav>
 
@@ -106,8 +126,12 @@ import { TempleService } from '../services/temple.service';
               <a (click)="closeMobileMenu()" routerLink="/library" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Library</a>
               <a (click)="closeMobileMenu()" routerLink="/gallery" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Gallery</a>
               <a (click)="closeMobileMenu()" routerLink="/feedback" class="px-4 py-3 rounded-md bg-white shadow-sm font-semibold text-stone-800 hover:bg-red-50">Feedback</a>
-              @if (templeService.isAdmin()) {
-                 <a (click)="closeMobileMenu()" routerLink="/admin" class="px-4 py-3 rounded-md bg-amber-100 shadow-sm font-semibold text-amber-900">CMS Dashboard</a>
+              
+              @if (templeService.currentUser()) {
+                 <button (click)="templeService.logout()" class="px-4 py-3 rounded-md bg-red-100 font-bold text-red-900 mt-2">Logout</button>
+              } @else {
+                 <a (click)="closeMobileMenu()" routerLink="/login" class="px-4 py-3 rounded-md bg-[#800000] text-white font-bold mt-2 text-center shadow">Log In / Sign Up</a>
+                 <a (click)="closeMobileMenu()" routerLink="/admin" class="px-4 py-3 rounded-md bg-stone-200 text-stone-600 font-bold mt-2 text-center text-sm">Admin Login</a>
               }
             </nav>
           </div>
@@ -138,6 +162,9 @@ import { TempleService } from '../services/temple.service';
               <li><a routerLink="/library" class="hover:text-amber-400 transition-colors">Spiritual Library</a></li>
               <li><a routerLink="/gallery" class="hover:text-amber-400 transition-colors">Photo Gallery</a></li>
               <li><a [href]="templeService.siteConfig().liveLink" target="_blank" class="hover:text-amber-400 transition-colors">YouTube Channel</a></li>
+              @if (!templeService.isAdmin()) {
+                 <li><a routerLink="/admin" class="hover:text-amber-400 transition-colors opacity-70">Admin Portal</a></li>
+              }
             </ul>
           </div>
           <div>

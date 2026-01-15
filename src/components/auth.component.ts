@@ -2,13 +2,13 @@
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { TempleService } from '../services/temple.service';
 
 @Component({
   selector: 'app-auth',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="min-h-screen bg-[#fffbeb] flex items-center justify-center p-4 relative overflow-hidden">
@@ -22,19 +22,23 @@ import { TempleService } from '../services/temple.service';
            <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-white border-2 border-amber-500 flex items-center justify-center shadow-sm">
               <img [src]="templeService.siteConfig().logoUrl" class="h-16 w-auto opacity-90 drop-shadow-sm">
            </div>
-           <h2 class="text-2xl font-serif font-bold text-[#800000] mb-1">Devotee Portal</h2>
+           <h2 class="text-2xl font-serif font-bold text-[#800000] mb-1">
+             {{ requires2FA() ? 'Admin Verification' : (isLogin() ? 'Devotee Portal' : 'Join Community') }}
+           </h2>
            <p class="text-xs text-stone-500 font-bold uppercase tracking-wider">Shri Venkateswara Swamy Temple</p>
         </div>
 
-        <!-- Auth Tabs -->
-        <div class="flex border-b border-stone-200">
-           <button (click)="isLogin.set(true); errorMsg.set('')" class="flex-1 py-4 text-sm font-bold transition-all" [class.text-[#800000]]="isLogin()" [class.bg-white]="isLogin()" [class.bg-stone-50]="!isLogin()" [class.text-stone-400]="!isLogin()" [class.border-b-2]="isLogin()" [class.border-[#800000]]="isLogin()">
-              LOG IN
-           </button>
-           <button (click)="isLogin.set(false); errorMsg.set('')" class="flex-1 py-4 text-sm font-bold transition-all" [class.text-[#800000]]="!isLogin()" [class.bg-white]="!isLogin()" [class.bg-stone-50]="isLogin()" [class.text-stone-400]="isLogin()" [class.border-b-2]="!isLogin()" [class.border-[#800000]]="!isLogin()">
-              REGISTER
-           </button>
-        </div>
+        <!-- Auth Tabs (Hidden during 2FA) -->
+        @if (!requires2FA()) {
+          <div class="flex border-b border-stone-200">
+             <button (click)="isLogin.set(true); errorMsg.set('')" class="flex-1 py-4 text-sm font-bold transition-all" [class.text-[#800000]]="isLogin()" [class.bg-white]="isLogin()" [class.bg-stone-50]="!isLogin()" [class.text-stone-400]="!isLogin()" [class.border-b-2]="isLogin()" [class.border-[#800000]]="isLogin()">
+                LOG IN
+             </button>
+             <button (click)="isLogin.set(false); errorMsg.set('')" class="flex-1 py-4 text-sm font-bold transition-all" [class.text-[#800000]]="!isLogin()" [class.bg-white]="!isLogin()" [class.bg-stone-50]="isLogin()" [class.text-stone-400]="isLogin()" [class.border-b-2]="!isLogin()" [class.border-[#800000]]="!isLogin()">
+                REGISTER
+             </button>
+          </div>
+        }
 
         <div class="p-8">
            @if (errorMsg()) {
@@ -44,7 +48,20 @@ import { TempleService } from '../services/temple.service';
               </div>
            }
 
-           @if (isLogin()) {
+           @if (requires2FA()) {
+              <!-- 2FA Form -->
+              <div class="animate-fade-in text-center">
+                 <p class="text-sm text-stone-600 mb-6">Enter the 2FA code to access the Admin Dashboard.</p>
+                 <input type="text" [(ngModel)]="otp" name="otp" class="w-full text-center p-4 border-2 border-stone-300 rounded-lg text-2xl tracking-[0.5em] font-mono focus:border-amber-500 outline-none mb-6" placeholder="000000" maxlength="6" autofocus>
+                 
+                 <button (click)="verifyOtp()" [disabled]="loading()" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all shadow-md disabled:opacity-70 flex justify-center items-center gap-2">
+                    @if (loading()) { <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> }
+                    Verify Code
+                 </button>
+                 <button (click)="cancel2FA()" class="mt-4 text-xs font-bold text-stone-500 hover:text-red-700">Cancel</button>
+              </div>
+
+           } @else if (isLogin()) {
               <!-- Login Form -->
               <form (submit)="handleLogin($event)" class="space-y-5 animate-fade-in">
                  <div>
@@ -62,7 +79,10 @@ import { TempleService } from '../services/temple.service';
                     </div>
                  </div>
                  
-                 <div class="flex justify-end">
+                 <div class="flex justify-between items-center">
+                    <label class="flex items-center gap-2 text-xs text-stone-600 font-bold cursor-pointer">
+                       <input type="checkbox" class="accent-[#800000]"> Remember me
+                    </label>
                     <a href="#" class="text-xs text-amber-700 hover:text-[#800000] font-bold hover:underline">Forgot Password?</a>
                  </div>
 
@@ -73,6 +93,25 @@ import { TempleService } from '../services/temple.service';
                     Sign In
                  </button>
               </form>
+              
+              <!-- Divider for clarity -->
+              <div class="relative my-6">
+                  <div class="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div class="w-full border-t border-stone-200"></div>
+                  </div>
+                  <div class="relative flex justify-center">
+                    <span class="bg-white px-2 text-xs text-stone-400 font-bold uppercase tracking-wide">Or</span>
+                  </div>
+              </div>
+              
+              <!-- Direct Admin Link -->
+              <div class="text-center">
+                  <a routerLink="/admin" class="inline-flex items-center gap-2 text-xs font-bold text-stone-500 hover:text-amber-700 transition-colors bg-stone-100 px-4 py-2 rounded-full hover:bg-amber-50">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" /></svg>
+                      Direct Admin Portal Access
+                  </a>
+              </div>
+
            } @else {
               <!-- Signup Form -->
               <form (submit)="handleSignUp($event)" class="space-y-5 animate-fade-in">
@@ -123,32 +162,60 @@ export class AuthComponent {
   router = inject(Router);
 
   isLogin = signal(true);
+  requires2FA = signal(false);
   loading = signal(false);
   errorMsg = signal('');
 
   email = '';
   password = '';
   fullName = '';
+  otp = '';
 
   async handleLogin(e: Event) {
     e.preventDefault();
     this.loading.set(true);
     this.errorMsg.set('');
 
-    try {
-      const { error } = await this.templeService.publicLogin(this.email, this.password);
-      if (error) throw error;
-      
-      // Redirect based on role
-      if (this.templeService.isAdmin()) {
-          this.router.navigate(['/admin']);
-      } else {
-          this.router.navigate(['/']);
-      }
-    } catch (err: any) {
-      this.errorMsg.set(err.message || 'Login failed. Please check credentials.');
-    } finally {
+    // Use unified login method which detects Admin status and triggers 2FA if needed
+    const result = await this.templeService.login(this.email, this.password);
+
+    if (result.error) {
       this.loading.set(false);
+      this.errorMsg.set(result.error);
+    } else if (result.requires2FA) {
+      this.loading.set(false);
+      this.requires2FA.set(true);
+    } else {
+      // Normal devotee login successful
+      this.loading.set(false);
+      this.redirectUser();
+    }
+  }
+
+  async verifyOtp() {
+    this.loading.set(true);
+    this.errorMsg.set('');
+    
+    const success = await this.templeService.verifyTwoFactor(this.otp);
+    if (success) {
+      this.redirectUser();
+    } else {
+      this.loading.set(false);
+      this.errorMsg.set('Invalid verification code. Please try again.');
+    }
+  }
+
+  cancel2FA() {
+    this.requires2FA.set(false);
+    this.otp = '';
+    this.templeService.logout(); // Reset auth state
+  }
+
+  private redirectUser() {
+    if (this.templeService.isAdmin()) {
+        this.router.navigate(['/admin']);
+    } else {
+        this.router.navigate(['/']);
     }
   }
 
@@ -164,7 +231,12 @@ export class AuthComponent {
       alert('Registration successful! Please check your email to verify your account.');
       this.isLogin.set(true);
     } catch (err: any) {
-      this.errorMsg.set(err.message || 'Registration failed.');
+      // Improve error messaging for common database/auth issues
+      if (err.message?.includes('Database error')) {
+         this.errorMsg.set('System is currently busy (Database Error). Please try again later.');
+      } else {
+         this.errorMsg.set(err.message || 'Registration failed.');
+      }
     } finally {
       this.loading.set(false);
     }

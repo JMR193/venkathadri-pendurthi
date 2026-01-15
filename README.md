@@ -1,14 +1,13 @@
 # Uttarandhra Tirumala (Uttandratirumala) - Temple Management System
 
-An advanced, full-stack Temple Management System built for **Shri Venkateswara Swamy Temple, Pendurthi**, widely revered as **Uttarandhra Tirumala**. This application serves as a digital gateway for devotees to book darshan, make donations (E-Hundi), view the digital library, perform virtual Arathi, and access daily temple updates, while providing a robust CMS for temple administrators.
+An advanced, frontend-only demonstration of a Temple Management System built for **Shri Venkateswara Swamy Temple, Pendurthi**, widely revered as **Uttarandhra Tirumala**. This application serves as a digital gateway for devotees to book darshan, make donations (E-Hundi), view the digital library, perform virtual Arathi, and access daily temple updates.
 
 ## 🚀 Technology Stack
 
 - **Frontend Framework**: Angular v19+ (Standalone Components, Signals, Zoneless Change Detection).
 - **Styling**: Tailwind CSS (Utility-first CSS).
 - **Backend / Database**: 
-  - **Firebase** (Realtime Firestore, Auth, Storage).
-  - **Supabase** (PostgreSQL, Auth, Storage).
+  - **None**. This is a frontend-only demonstration. All data is hardcoded in the Angular service.
 - **AI & 3D**: 
   - **Google Gemini API** (Digital Sahayak AI Chatbot).
   - **Three.js** (3D Digital Darshan with interactive animations).
@@ -28,33 +27,20 @@ An advanced, full-stack Temple Management System built for **Shri Venkateswara S
     *   Conversational AI assistant powered by **Gemini 2.5 Flash**.
     *   Answers queries about timings, history, and booking procedures in natural language.
 *   **Special Entry Darshan Booking**:
-    *   Calendar-based slot selection with real-time capacity management.
+    *   Simulated calendar-based slot selection with mock availability.
     *   Form validation for pilgrim details.
-    *   **Digital Ticket Generation**: Instant printable ticket with a QR code for entry verification.
+    *   **Digital Ticket Generation**: Instant printable ticket for entry verification.
 *   **E-Hundi (Donations)**:
     *   Support for Online Payment Gateway simulation and Direct Bank Transfer/UPI.
     *   Instant digital receipt generation with transaction details.
 *   **Digital Library**: Access to devotional audio tracks (MP3) and spiritual E-Books (PDF) with offline caching.
 *   **Enhanced Gallery**: 
     *   Media gallery with an interactive lightbox for viewing high-res images.
-    *   **Download** functionality for all images.
-    *   Instructions for setting images as device wallpaper.
 *   **History & Info**: Detailed temple timeline, architecture info, and visiting hours.
 *   **Global Audio Player**: Persistent background chanting (*Om Namo Venkatesaya*) with toggle controls.
 
 ### 🛡️ For Administrators (CMS)
-*   **Secure Authentication**: Email/Password login with simulated Two-Factor Authentication (2FA).
-*   **Dashboard**: Real-time statistics and quick actions like "Festival Mode".
-*   **Theme & Design Customizer**:
-    *   Dynamically change the website's entire color scheme (primary, secondary, accent colors).
-    *   Customize typography by selecting different Google Fonts for headings and body text.
-    *   Changes are applied sitewide instantly.
-*   **Content Management**:
-    *   **Enhanced Announcements**: Post news with a title, rich content, featured image, and file attachments.
-    *   **Gallery Management**: Upload images/videos directly to Cloud Storage or via URL.
-    *   **Library Management**: Add/Remove audio and PDF resources.
-*   **Site Configuration**: Dynamic control over Temple Name, Logos, Contact Info, Daily Panchangam image, and Bank QR codes.
-*   **Donation Reports**: Filterable ledger of all transactions with CSV export.
+*   **Disabled**: The Admin Portal is a placeholder in this version, as it requires a backend to function.
 
 ## 🛠️ Setup & Installation
 
@@ -74,18 +60,7 @@ An advanced, full-stack Temple Management System built for **Shri Venkateswara S
     npm install
     ```
 
-3.  **Environment Configuration**:
-    The app comes with a pre-configured `src/environments/environment.ts`. 
-    
-### 🗄️ Supabase Setup
-To initialize the backend:
-1.  Go to your Supabase Project Dashboard.
-2.  Open the **SQL Editor**.
-3.  Copy the contents of `supabase_schema.sql` from the project root.
-4.  Run the query to create all required tables and policies.
-5.  Create a storage bucket named `temple-assets` (Public) in the Storage section.
-
-4.  **Run the application**:
+3.  **Run the application**:
     ```bash
     npm start
     ```
@@ -95,29 +70,26 @@ To initialize the backend:
 
 ```
 src/
-├── app.component.ts         # Main layout, Global Audio, Header/Footer, Theme Engine
+├── app.component.ts         # Main layout, Global Audio, Header/Footer
 ├── components/              # Feature-specific pages
-│   ├── admin.component.ts   # CMS, Dashboard, Auth, Editors, Theme Customizer
+│   ├── admin.component.ts   # Placeholder for CMS
 │   ├── booking.component.ts # Slot selection, Ticket generation
 │   ├── chat.component.ts    # Gemini AI Chatbot
 │   ├── digital-darshan.ts   # Three.js 3D View with effects
 │   ├── ehundi.component.ts  # Donation forms, Receipt generation
-│   ├── gallery.component.ts # Media grid with Lightbox & Download
-│   ├── history.component.ts # Static info pages
-│   ├── home.component.ts    # Landing page, Panchangam widget, News display
 │   └── ...
 ├── services/
-│   └── temple.service.ts    # Supabase Client, Global State Signals (Config, Theme, Data)
-└── environments/            # API Keys and Config
+│   └── temple.service.ts    # Global State Signals with hardcoded data
+└── environments/            # Environment config (no backend keys)
 ```
 
 ## 🔮 Future Upgrades
 
-### 1. Payment Gateway Integration
-*   Integrate **Razorpay** or **Stripe** API for real-time payment processing for bookings and donations.
+### 1. Backend Integration
+*   Connect the application to a backend service like **Firebase** or **Supabase** to enable persistent data, user authentication, and real-time updates.
 
-### 2. WhatsApp API Automation
-*   Automatically send Booking Tickets and Donation Receipts to the devotee's WhatsApp number.
+### 2. Payment Gateway Integration
+*   Integrate **Razorpay** or **Stripe** API for real-time payment processing for bookings and donations.
 
 ### 3. Progressive Web App (PWA) Enhancements
 *   Enable push notifications for temple events and festivals.

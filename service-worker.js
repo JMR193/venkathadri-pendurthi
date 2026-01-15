@@ -57,29 +57,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. API / Supabase Data Strategy: Network First, then Cache
-  // We want fresh news/darshan slots, but show old data if offline.
-  if (url.href.includes('supabase.co')) {
-    event.respondWith(
-      caches.open(DATA_CACHE_NAME).then((cache) => {
-        return fetch(event.request)
-          .then((response) => {
-            // If valid response, clone and cache
-            if (response.status === 200) {
-              cache.put(event.request, response.clone());
-            }
-            return response;
-          })
-          .catch(() => {
-            // Network failed, try cache
-            return cache.match(event.request);
-          });
-      })
-    );
-    return;
-  }
-
-  // 3. Static Assets / Other: Stale-While-Revalidate
+  // 2. Static Assets / Other: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {

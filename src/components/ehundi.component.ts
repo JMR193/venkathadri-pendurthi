@@ -1,4 +1,3 @@
-
 import { Component, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
@@ -184,13 +183,18 @@ import { TempleService, Donation } from '../services/temple.service';
                           <input type="number" [(ngModel)]="amount" name="amount" required min="1" class="w-full p-3 border border-stone-300 themed-rounded focus:ring-2 focus:ring-amber-500 outline-none text-xl font-bold text-stone-800">
                         </div>
 
-                        <button *ngIf="paymentMode === 'online'" type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold py-4 themed-rounded-xl shadow-lg hover:from-amber-700 hover:to-amber-800 transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
-                          Proceed to Secure Payment ₹{{ amount }}
-                        </button>
-                        <button *ngIf="paymentMode === 'bank'" type="button" (click)="recordOfflineDonation()" class="w-full bg-stone-800 text-white font-bold py-4 themed-rounded-xl shadow-lg hover:bg-stone-900 transform hover:-translate-y-1 transition-all">
-                          I have made the transfer - Record Donation
-                        </button>
+                        <!-- Fix: Use @if control flow instead of *ngIf -->
+                        @if (paymentMode === 'online') {
+                          <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white font-bold py-4 themed-rounded-xl shadow-lg hover:from-amber-700 hover:to-amber-800 transform hover:-translate-y-1 transition-all flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+                            Proceed to Secure Payment ₹{{ amount }}
+                          </button>
+                        }
+                        @if (paymentMode === 'bank') {
+                          <button type="button" (click)="recordOfflineDonation()" class="w-full bg-stone-800 text-white font-bold py-4 themed-rounded-xl shadow-lg hover:bg-stone-900 transform hover:-translate-y-1 transition-all">
+                            I have made the transfer - Record Donation
+                          </button>
+                        }
                         
                         <p class="text-center text-xs text-stone-500 mt-4 flex items-center justify-center gap-1">
                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3"><path fill-rule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clip-rule="evenodd" /></svg>

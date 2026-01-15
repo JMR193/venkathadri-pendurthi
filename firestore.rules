@@ -1,1 +1,50 @@
-// This file is no longer needed. Please delete it.
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check for admin role based on email
+    function isAdmin() {
+      return request.auth.token.email == 'admin@uttarandhratirupati.org' || request.auth.token.email == 'admin@temple.com';
+    }
+
+    // Publicly readable, admin-writable collections
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /news/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /gallery/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /library/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Feedback can be created by anyone, but only read/deleted by admins
+    match /feedback/{docId} {
+      allow read, delete: if isAdmin();
+      allow create: if true;
+    }
+
+    // User-specific data for bookings
+    match /bookings/{bookingId} {
+      allow read: if isAdmin() || request.auth.uid == resource.data.user_id;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.user_id;
+      allow update: if (isAdmin() || request.auth.uid == resource.data.user_id) && request.resource.data.status == 'Cancelled';
+      allow delete: if isAdmin();
+    }
+
+    // User-specific data for donations
+    match /donations/{donationId} {
+      allow read: if isAdmin() || request.auth.uid == resource.data.user_id;
+      allow create: if request.auth.uid != null && request.auth.uid == request.resource.data.user_id;
+      allow delete: if isAdmin();
+    }
+  }
+}
